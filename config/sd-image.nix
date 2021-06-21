@@ -2,27 +2,24 @@
   imports = [
     ## Uncomment at most one of the following to select the target system:
     # ./generic-aarch64 # (note: this is the same as 'rpi3')
-    # ./rpi4
-    ./rpi3
+    ./rpi4
+    #./rpi3
   ];
 
   # The installer starts with a "nixos" user to allow installation, so add the SSH key to
   # that user. Note that the key is, at the time of writing, put in `/etc/ssh/authorized_keys.d`
   users.extraUsers.nixos.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 ..."
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU+wbNztxJSaAatNoq0BXE9ZVuGTz4r7BNO6C0mU947reXlLd50sbGzH71VwLhfM9R+4y1sH5/Il3NmdkZMaUudHUycqxLo/TzOMdWak9a1thFO1pRhVmxMTn4LLLDW/m0VeDk/UXNGmJHfjo+G5szYaJ2C+SSfnsYCSNnqHToXBIGKhjRyqKLZZ49w3V48ctM0bddXoa2WrYIVTKmOuVTppzy9z8rZdrNb7H27YRc/t0NEAesLL1YIpWi2HSojxHS+ZcwiLH56E9kLfngQ8cIhOknpI6++Z9UD+VZHy3tKG7G2gBXLi6/inG60E7udwR2Z8R8dJAtyw2uxJz0TBXr"
   ];
 
-  # bzip2 compression takes loads of time with emulation, skip it. Enable this if you're low
-  # on space.
-  sdImage.compressImage = false;
 
-  # OpenSSH is forced to have an empty `wantedBy` on the installer system[1], this won't allow it
-  # to be automatically started. Override it with the normal value.
-  # [1] https://github.com/NixOS/nixpkgs/blob/9e5aa25/nixos/modules/profiles/installation-device.nix#L76
-  systemd.services.sshd.wantedBy = lib.mkOverride 40 [ "multi-user.target" ];
+
 
   # Enable OpenSSH out of the box.
-  services.sshd.enable = true;
+
+
+  virtualisation.docker.enable = true;
+
 
   # Wireless networking (1). You might want to enable this if your Pi is not attached via Ethernet.
   #networking.wireless = {
