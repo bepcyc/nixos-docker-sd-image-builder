@@ -42,8 +42,9 @@
   ];
 
   sdImage = {
+    compressImage = false;
     # This might need to be increased when deploying multiple configurations.
-    firmwareSize = 128;
+    firmwareSize = 512;
     # TODO: check if needed.
     populateFirmwareCommands =
       "${config.system.build.installBootLoader} ${config.system.build.toplevel} -d ./firmware";
@@ -52,6 +53,7 @@
     populateRootCommands = "mkdir -p ./files/var/empty";
   };
 
+  security.sudo.wheelNeedsPassword = false;
   # the installation media is also the installation target,
   # so we don't want to provide the installation configuration.nix.
   installer.cloneConfig = false;
@@ -67,4 +69,46 @@
           fsType = "ext4";
       };
   };
+  # OpenSSH is forced to have an empty `wantedBy` on the installer system[1], this won't allow it
+  # to be automatically started. Override it with the normal value.
+  # [1] https://github.com/NixOS/nixpkgs/blob/9e5aa25/nixos/modules/profiles/installation-device.nix#L76
+  systemd.services.sshd.wantedBy = lib.mkOverride 40 [ "multi-user.target" ];
+  services.sshd.enable = true;
+  # NTP time sync.
+  services.timesyncd.enable = true;
+  services.nfs.server = {
+    enable = true;
+    exports = ''
+    '';
+    #/export         192.168.1.10(rw,fsid=0,no_subtree_check) 192.168.1.15(rw,fsid=0,no_subtree_check)
+  };
+
+  services.plex = {
+    enable = true;
+    user = "plex";
+    openFirewall = true;
+  };
+  services.homeassistant = {
+    enable = true;
+  };
+
+  users.users.bepcyc = {
+    isNormalUser = true;
+    # Don't forget to change the home directory too.
+    home = "/home/bepcyc";
+    # This allows this user to use `sudo`.
+    extraGroups = [
+      "wheel"
+      "plex"
+      "docker"
+    ];
+    # SSH authorized keys for this user.
+    openssh.authorizedKeys.keys = [
+      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU+wbNztxJSaAatNoq0BXE9ZVuGTz4r7BNO6C0mU947reXlLd50sbGzH71VwLhfM9R+4y1sH5/Il3NmdkZMaUudHUycqxLo/TzOMdWak9a1thFO1pRhVmxMTn4LLLDW/m0VeDk/UXNGmJHfjo+G5szYaJ2C+SSfnsYCSNnqHToXBIGKhjRyqKLZZ49w3V48ctM0bddXoa2WrYIVTKmOuVTppzy9z8rZdrNb7H27YRc/t0NEAesLL1YIpWi2HSojxHS+ZcwiLH56E9kLfngQ8cIhOknpI6++Z9UD+VZHy3tKG7G2gBXLi6/inG60E7udwR2Z8R8dJAtyw2uxJz0TBXr"
+    ];
+  };
+
+  nix.gc.automatic = true;
+  nix.gc.options = "--delete-older-than 30d";
+
 }
